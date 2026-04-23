@@ -10,7 +10,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+@Deprecated
 public final class Utilities {
+
+    private static final ReflectionObjectMapper MAPPER = new ReflectionObjectMapper();
 
     private Utilities() {
     }
@@ -54,7 +57,7 @@ public final class Utilities {
         if (sourceCollection != null && !sourceCollection.isEmpty()) {
             return sourceCollection.stream().map(element -> {
                 try {
-                    return Mapper.map(element, destinationClass);
+                    return MAPPER.map(element, destinationClass);
                 } catch (Exception e) {
                     throw new MapperException(e.getMessage(), e);
                 }
@@ -81,7 +84,7 @@ public final class Utilities {
         if (sourceCollection != null && !sourceCollection.isEmpty()) {
             return sourceCollection.stream().map(element -> {
                 try {
-                    R mapped = Mapper.map(element, destinationClass);
+                    R mapped = MAPPER.map(element, destinationClass);
 
                     return complementaryFunction != null ? complementaryFunction.apply(element, mapped) : mapped;
                 } catch (Exception e) {
@@ -129,7 +132,7 @@ public final class Utilities {
 
         if (sourceObject != null) {
             try {
-                R mapped = Mapper.map(sourceObject, destinationClass);
+                R mapped = MAPPER.map(sourceObject, destinationClass);
 
                 return complementaryFunction != null ? complementaryFunction.apply(sourceObject, mapped) : mapped;
             } catch (Exception e) {
@@ -144,7 +147,7 @@ public final class Utilities {
         if (sourceObject != null) {
             try {
 
-                return Mapper.map(sourceObject, destinationClass);
+                return MAPPER.map(sourceObject, destinationClass);
             } catch (Exception e) {
                 throw new MapperException(e.getMessage(), e);
             }

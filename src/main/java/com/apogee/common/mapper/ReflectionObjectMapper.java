@@ -1,6 +1,10 @@
 package com.apogee.common.mapper;
 
 import com.apogee.common.exceptions.MapperException;
+import com.apogee.common.mapper.interfaces.ObjectMapper;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
@@ -26,7 +30,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 
-public final class Mapper {
+public class ReflectionObjectMapper implements ObjectMapper {
+
+    private static final Logger logger = LoggerFactory.getLogger(ReflectionObjectMapper.class);
 
     private static final Set<Class<?>> SIMPLE_TYPES = Set.of(
             String.class, UUID.class, BigDecimal.class, BigInteger.class
@@ -35,11 +41,11 @@ public final class Mapper {
     private static final Map<Class<?>, Enum<?>[]> ENUM_CACHE = new ConcurrentHashMap<>();
     private static final Map<Class<?>, Map<String, PropertyDescriptor>> PROP_DESCRIPTOR_CACHE = new ConcurrentHashMap<>();
 
-    private Mapper() {
-        // private constructor to prevent instantiation
-    }
+    // For performance, add field cache
+    private static final Map<Class<?>, Map<String, Field>> FIELD_CACHE = new ConcurrentHashMap<>();
 
-    public static <S, D> D map(S source, Class<D> destinationClass) throws Exception {
+    @Override
+    public <S, D> D map(S source, Class<D> destinationClass) throws Exception {
 
         if (source == null) {
             return null;
@@ -63,7 +69,7 @@ public final class Mapper {
         return destinationObj;
     }
 
-    private static <S, D> void processProperty(S source, Class<D> destinationClass, Map.Entry<String, PropertyDescriptor> entry, Map<String, PropertyDescriptor> destinationPropertyDescriptors, D destinationObj) throws Exception {
+    private <S, D> void processProperty(S source, Class<D> destinationClass, Map.Entry<String, PropertyDescriptor> entry, Map<String, PropertyDescriptor> destinationPropertyDescriptors, D destinationObj) throws Exception {
         String propName = entry.getKey();
         PropertyDescriptor sourcePd = entry.getValue();
 
@@ -81,7 +87,7 @@ public final class Mapper {
         handleProperty(destinationClass, destinationObj, propName, sourcePd, sourceValue, destinationPropertyDescriptor);
     }
 
-    private static <D> void handleProperty(Class<D> destinationClass, D destinationObj, String propName, PropertyDescriptor sourcePd, Object sourceValue, PropertyDescriptor destinationPropertyDescriptor) throws Exception {
+    private <D> void handleProperty(Class<D> destinationClass, D destinationObj, String propName, PropertyDescriptor sourcePd, Object sourceValue, PropertyDescriptor destinationPropertyDescriptor) throws Exception {
 
         Field destField = findField(destinationClass, propName);
 
@@ -110,7 +116,7 @@ public final class Mapper {
         }
     }
 
-    private static Field findField(Class<?> clazz, String fieldName) {
+    private Field findField(Class<?> clazz, String fieldName) {
         Class<?> current = clazz;
 
         while (current != null && current != Object.class) {
@@ -124,23 +130,23 @@ public final class Mapper {
         return null;
     }
 
-    private static <D> void handleNestedObjectValue(D destinationObj, Object sourceValue, PropertyDescriptor destinationPropertyDescriptor, Field destField) throws Exception {
+    private <D> void handleNestedObjectValue(D destinationObj, Object sourceValue, PropertyDescriptor destinationPropertyDescriptor, Field destField) throws Exception {
         Class<?> nestedDestClass = destField.getType();
-        Object mapped = map(sourceValue, nestedDestClass);
+        Object mapped = this.map(sourceValue, nestedDestClass);
         destinationPropertyDescriptor.getWriteMethod().invoke(destinationObj, mapped);
     }
 
-    private static <D> void handleMapValue(D destinationObj, Object sourceValue, PropertyDescriptor destinationPropertyDescriptor, Field destField) throws Exception {
+    private <D> void handleMapValue(D destinationObj, Object sourceValue, PropertyDescriptor destinationPropertyDescriptor, Field destField) throws Exception {
         Object mappedMap = mapMap(sourceValue, destField);
         destinationPropertyDescriptor.getWriteMethod().invoke(destinationObj, mappedMap);
     }
 
-    private static <D> void handleCollectionValue(D destinationObj, Object sourceValue, PropertyDescriptor destinationPropertyDescriptor, Field destField) throws Exception {
+    private <D> void handleCollectionValue(D destinationObj, Object sourceValue, PropertyDescriptor destinationPropertyDescriptor, Field destField) throws Exception {
         Object mappedCollection = mapCollection(sourceValue, destField);
         destinationPropertyDescriptor.getWriteMethod().invoke(destinationObj, mappedCollection);
     }
 
-    private static <D> void handleNullValue(D destinationObj, PropertyDescriptor destinationPropertyDescriptor) throws IllegalAccessException, InvocationTargetException {
+    private <D> void handleNullValue(D destinationObj, PropertyDescriptor destinationPropertyDescriptor) throws IllegalAccessException, InvocationTargetException {
         Class<?> destinationPropType = destinationPropertyDescriptor.getPropertyType();
         if (Collection.class.isAssignableFrom(destinationPropType)) {
             destinationPropertyDescriptor.getWriteMethod().invoke(destinationObj, createCollectionInstance(destinationPropType));
@@ -151,7 +157,7 @@ public final class Mapper {
         }
     }
 
-    private static <S, D> D mapEnum(S source, Class<D> destinationClass) {
+    private <S, D> D mapEnum(S source, Class<D> destinationClass) {
 
         Enum<?> sourceEnum = (Enum<?>) source;
 
@@ -183,7 +189,7 @@ public final class Mapper {
         }
     }
 
-    private static Collection<Object> mapCollection(Object sourceValue, Field destinationField) throws Exception {
+    private Collection<Object> mapCollection(Object sourceValue, Field destinationField) throws Exception {
 
         Collection<Object> destinationCollection = createCollectionInstance(destinationField.getType());
 
@@ -202,7 +208,7 @@ public final class Mapper {
             } else if (isSimpleField(item.getClass())) {
                 destinationCollection.add(item);
             } else {
-                destinationCollection.add(map(item, genericType));
+                destinationCollection.add(this.map(item, genericType));
             }
         }
 
@@ -210,7 +216,7 @@ public final class Mapper {
 
     }
 
-    private static <D> D getNewDestinationInstance(Class<D> destinationClass) throws InvocationTargetException, InstantiationException, IllegalAccessException {
+    private <D> D getNewDestinationInstance(Class<D> destinationClass) throws InvocationTargetException, InstantiationException, IllegalAccessException {
 
         // getting reference to the destination class constructor from cache or creating a new one.
         @SuppressWarnings("unchecked")
@@ -227,7 +233,7 @@ public final class Mapper {
         return constructor.newInstance();
     }
 
-    private static Map<String, PropertyDescriptor> getPropertyDescriptorMap(Class<?> cls) {
+    private Map<String, PropertyDescriptor> getPropertyDescriptorMap(Class<?> cls) {
         return PROP_DESCRIPTOR_CACHE.computeIfAbsent(cls, c -> {
             Map<String, PropertyDescriptor> map = new HashMap<>();
             try {
@@ -239,7 +245,7 @@ public final class Mapper {
         });
     }
 
-    private static Object mapMap(Object sourceValue, Field destinationField) throws Exception {
+    private Object mapMap(Object sourceValue, Field destinationField) throws Exception {
         if (sourceValue == null) {
             return null;
         }
@@ -253,8 +259,8 @@ public final class Mapper {
             Object key = entry.getKey();
             Object value = entry.getValue();
 
-            Object mappedKey = (isSimpleField(key.getClass())) ? key : map(key, genericTypes[0]);
-            Object mappedValue = (isSimpleField(value.getClass())) ? value : map(value, genericTypes[1]);
+            Object mappedKey = (isSimpleField(key.getClass())) ? key : this.map(key, genericTypes[0]);
+            Object mappedValue = (isSimpleField(value.getClass())) ? value : this.map(value, genericTypes[1]);
 
             destinationMap.put(mappedKey, mappedValue);
         }
@@ -262,7 +268,7 @@ public final class Mapper {
         return destinationMap;
     }
 
-    private static Class<?>[] getGenericTypes(Field targetField) throws ClassNotFoundException {
+    private Class<?>[] getGenericTypes(Field targetField) throws ClassNotFoundException {
 
         Type type = targetField.getGenericType();
 
@@ -276,7 +282,7 @@ public final class Mapper {
         return new Class<?>[]{Object.class, Object.class};
     }
 
-    private static Class<?> getGenericType(Field targetField) throws ClassNotFoundException {
+    private Class<?> getGenericType(Field targetField) throws ClassNotFoundException {
 
         Type type = targetField.getGenericType();
 
@@ -291,7 +297,7 @@ public final class Mapper {
     }
 
 
-    private static Collection<Object> createCollectionInstance(Class<?> type) {
+    private Collection<Object> createCollectionInstance(Class<?> type) {
 
         if (List.class.isAssignableFrom(type)) {
 
@@ -305,7 +311,7 @@ public final class Mapper {
         }
     }
 
-    private static Map<Object, Object> createMapInstance(Class<?> type) {
+    private Map<Object, Object> createMapInstance(Class<?> type) {
 
         if (Map.class.isAssignableFrom(type)) {
             return new HashMap<>();
@@ -315,7 +321,7 @@ public final class Mapper {
     }
 
 
-    private static boolean isSimpleField(Class<?> sourceClass) {
+    private boolean isSimpleField(Class<?> sourceClass) {
 
         return sourceClass.isPrimitive()
                 || SIMPLE_TYPES.contains(sourceClass)
