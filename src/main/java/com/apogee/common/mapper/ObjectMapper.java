@@ -3,7 +3,6 @@ package com.apogee.common.mapper;
 import com.apogee.common.exceptions.MapperException;
 import com.apogee.common.mapper.interfaces.ThrowingBiFunction;
 import com.apogee.common.mapper.interfaces.ThrowingFunction;
-import com.fasterxml.jackson.core.JsonProcessingException;
 
 import lombok.extern.log4j.Log4j2;
 
@@ -18,8 +17,6 @@ import java.util.Optional;
  */
 @Log4j2
 public final class ObjectMapper {
-
-    private static final com.fasterxml.jackson.databind.ObjectMapper JSON_MAPPER = new com.fasterxml.jackson.databind.ObjectMapper();  // Cached for performance
 
     private ObjectMapper() {
         // Utility class
