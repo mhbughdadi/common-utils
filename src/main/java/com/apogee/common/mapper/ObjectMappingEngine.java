@@ -1,7 +1,6 @@
 package com.apogee.common.mapper;
 
 import com.apogee.common.exceptions.MapperException;
-import com.apogee.common.mapper.interfaces.ObjectMapper;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,9 +29,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 
-public class ReflectionObjectMapper implements ObjectMapper {
+public class ObjectMappingEngine {
 
-    private static final Logger logger = LoggerFactory.getLogger(ReflectionObjectMapper.class);
+    private static final Logger logger = LoggerFactory.getLogger(ObjectMappingEngine.class);
 
     private static final Set<Class<?>> SIMPLE_TYPES = Set.of(
             String.class, UUID.class, BigDecimal.class, BigInteger.class
@@ -44,7 +43,6 @@ public class ReflectionObjectMapper implements ObjectMapper {
     // For performance, add field cache
     private static final Map<Class<?>, Map<String, Field>> FIELD_CACHE = new ConcurrentHashMap<>();
 
-    @Override
     public <S, D> D map(S source, Class<D> destinationClass) throws Exception {
 
         if (source == null) {

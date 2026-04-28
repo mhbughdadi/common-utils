@@ -9,7 +9,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class ReflectionObjectMapperTest {
 
-    private final ReflectionObjectMapper mapper = new ReflectionObjectMapper();
+    private final ObjectMappingEngine mapper = new ObjectMappingEngine();
 
     static class Source {
         private String name;

@@ -1,7 +1,6 @@
 package com.apogee.common.mapper;
 
 import com.apogee.common.exceptions.MapperException;
-import com.apogee.common.mapper.interfaces.ObjectMapper;
 import com.apogee.common.mapper.interfaces.ThrowingBiFunction;
 import com.apogee.common.mapper.interfaces.ThrowingFunction;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -18,12 +17,12 @@ import java.util.Optional;
  * Utility class for object mapping operations, including collections and single objects.
  * Provides methods for transforming data with optional customization callbacks.
  */
-public final class ObjectMapperUtils {
+public final class ObjectMapper {
 
-    private static final Logger logger = LoggerFactory.getLogger(ObjectMapperUtils.class);
+    private static final Logger logger = LoggerFactory.getLogger(ObjectMapper.class);
     private static final com.fasterxml.jackson.databind.ObjectMapper JSON_MAPPER = new com.fasterxml.jackson.databind.ObjectMapper();  // Cached for performance
 
-    private ObjectMapperUtils() {
+    private ObjectMapper() {
         // Utility class
     }
 
@@ -195,8 +194,8 @@ public final class ObjectMapperUtils {
         }
     }
 
-    private static ObjectMapper getDefaultMapper() {
+    private static ObjectMappingEngine getDefaultMapper() {
         // In a real scenario, this could be injected or configurable
-        return new ReflectionObjectMapper();
+        return new ObjectMappingEngine();
     }
 }

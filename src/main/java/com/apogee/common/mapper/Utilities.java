@@ -13,7 +13,7 @@ import java.util.List;
 @Deprecated
 public final class Utilities {
 
-    private static final ReflectionObjectMapper MAPPER = new ReflectionObjectMapper();
+    private static final ObjectMappingEngine MAPPER = new ObjectMappingEngine();
 
     private Utilities() {
     }
