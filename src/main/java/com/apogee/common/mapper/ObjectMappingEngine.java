@@ -23,9 +23,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import lombok.extern.log4j.Log4j2;
 import java.util.stream.Collectors;
 
 
+@Log4j2
 public class ObjectMappingEngine {
 
     private static final Set<Class<?>> SIMPLE_TYPES = Set.of(
@@ -74,6 +76,11 @@ public class ObjectMappingEngine {
         }
 
         Object sourceValue = sourcePd.getReadMethod().invoke(source);
+
+        if (log.isTraceEnabled()) {
+            Class<?> sourceType = sourcePd.getPropertyType();
+            log.trace("Processing property '{}' of type {}", propName, sourceType.getName());
+        }
 
         PropertyDescriptor destinationPropertyDescriptor = destinationPropertyDescriptors.get(propName);
         if (destinationPropertyDescriptor == null || destinationPropertyDescriptor.getWriteMethod() == null) {
@@ -129,16 +136,25 @@ public class ObjectMappingEngine {
     private <D> void handleNestedObjectValue(D destinationObj, Object sourceValue, PropertyDescriptor destinationPropertyDescriptor, Field destField) throws Exception {
         Class<?> nestedDestClass = destField.getType();
         Object mapped = this.map(sourceValue, nestedDestClass);
+        if (log.isDebugEnabled()) {
+            log.debug("Mapped nested object for field '{}' to {}", destField.getName(), nestedDestClass.getName());
+        }
         destinationPropertyDescriptor.getWriteMethod().invoke(destinationObj, mapped);
     }
 
     private <D> void handleMapValue(D destinationObj, Object sourceValue, PropertyDescriptor destinationPropertyDescriptor, Field destField) throws Exception {
         Object mappedMap = mapMap(sourceValue, destField);
+        if (log.isDebugEnabled()) {
+            log.debug("Mapped map for field '{}'", destField.getName());
+        }
         destinationPropertyDescriptor.getWriteMethod().invoke(destinationObj, mappedMap);
     }
 
     private <D> void handleCollectionValue(D destinationObj, Object sourceValue, PropertyDescriptor destinationPropertyDescriptor, Field destField) throws Exception {
         Object mappedCollection = mapCollection(sourceValue, destField);
+        if (log.isDebugEnabled()) {
+            log.debug("Mapped collection for field '{}'", destField.getName());
+        }
         destinationPropertyDescriptor.getWriteMethod().invoke(destinationObj, mappedCollection);
     }
 
@@ -167,17 +183,22 @@ public class ObjectMappingEngine {
                 }
             }
 
+            log.error("No matching enum constant for {} in {}", sourceEnum.name(), destinationClass.getName());
             throw new MapperException(
                     "No matching enum constant for " + sourceEnum.name() +
                             " in " + destinationClass.getName()
             );
         } else if (destinationClass == String.class) {
             // Allow Enum -> String
+            if (log.isDebugEnabled()) {
+                log.debug("Mapping enum {} to String value", sourceEnum.name());
+            }
             return (D) sourceEnum.name();
         } else if (destinationClass == int.class || destinationClass == Integer.class) {
             // Allow Enum -> ordinal
             return (D) Integer.valueOf(sourceEnum.ordinal());
         } else {
+            log.error("Cannot map enum type {} to non-enum type {}", source.getClass().getName(), destinationClass.getName());
             throw new MapperException(
                     "Cannot map enum type " + source.getClass().getName() +
                             " to non-enum type " + destinationClass.getName()
@@ -221,9 +242,19 @@ public class ObjectMappingEngine {
                 // prefer public no-arg constructor
                 return cls.getDeclaredConstructor();
             } catch (Exception e) {
+                log.error("No default constructor found for class: {}", cls.getName(), e);
                 throw new MapperException("No default constructor found for class: " + cls.getName(), e);
             }
         });
+
+        // ensure constructor is accessible (supports non-public no-arg constructors)
+        try {
+            if (!constructor.canAccess(null)) {
+                constructor.setAccessible(true);
+            }
+        } catch (Exception ignored) {
+            // ignore security exceptions; we'll still attempt to instantiate
+        }
 
         // creating an instance from the destination class constructor.
         return constructor.newInstance();
@@ -255,8 +286,23 @@ public class ObjectMappingEngine {
             Object key = entry.getKey();
             Object value = entry.getValue();
 
-            Object mappedKey = (isSimpleField(key.getClass())) ? key : this.map(key, genericTypes[0]);
-            Object mappedValue = (isSimpleField(value.getClass())) ? value : this.map(value, genericTypes[1]);
+            Object mappedKey;
+            if (key == null) {
+                mappedKey = null;
+            } else if (isSimpleField(key.getClass())) {
+                mappedKey = key;
+            } else {
+                mappedKey = this.map(key, genericTypes[0]);
+            }
+
+            Object mappedValue;
+            if (value == null) {
+                mappedValue = null;
+            } else if (isSimpleField(value.getClass())) {
+                mappedValue = value;
+            } else {
+                mappedValue = this.map(value, genericTypes[1]);
+            }
 
             destinationMap.put(mappedKey, mappedValue);
         }
