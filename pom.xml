@@ -15,7 +15,6 @@
     <maven.compiler.source>21</maven.compiler.source>
     <maven.compiler.target>21</maven.compiler.target>
     <lombok.version>1.18.30</lombok.version>
-    <jackson.version>2.21.1</jackson.version>
     <jupiter.version>5.10.0</jupiter.version>
     <log4j-api.version>2.23.1</log4j-api.version>
     <log4j-core.version>2.23.1</log4j-core.version>
@@ -36,25 +35,19 @@
       <scope>compile</scope>
     </dependency>
 
-    <!-- fasterxml for json marshalling / de-marshalling -->
-    <dependency>
-        <groupId>com.fasterxml.jackson.core</groupId>
-        <artifactId>jackson-databind</artifactId>
-        <version>${jackson.version}</version>
-        <scope>compile</scope>
-    </dependency>
-
-    <!-- SLF4J for logging -->
+    <!-- Log4j2 for logging -->
     <dependency>
       <groupId>org.apache.logging.log4j</groupId>
       <artifactId>log4j-api</artifactId>
       <version>${log4j-api.version}</version>
+      <scope>compile</scope>
     </dependency>
 
     <dependency>
       <groupId>org.apache.logging.log4j</groupId>
       <artifactId>log4j-core</artifactId>
       <version>${log4j-core.version}</version>
+      <scope>compile</scope>
     </dependency>
 
     <!-- Test dependencies -->

@@ -140,25 +140,6 @@ public final class ObjectMapper {
         return transform(sourceObject, destinationClass, null);
     }
 
-    /**
-     * Format an object as a JSON string.
-     *
-     * @param object the object to format (nullable)
-     * @return the JSON string representation, or null if object is null
-     * @throws MapperException if JSON serialization fails
-     */
-    public static String formatAsJsonObject(Object object) {
-        if (object == null) {
-            return null;
-        }
-        try {
-            return JSON_MAPPER.writeValueAsString(object);
-        } catch (JsonProcessingException e) {
-            log.error("Failed to serialize object to JSON", e);
-            throw new MapperException("Failed to serialize object to JSON", e);
-        }
-    }
-
     // Helper methods
 
     private static <S, R> R applyMappingFunction(S element, ThrowingFunction<S, R> mappingFunction) throws MapperException {

@@ -113,20 +113,6 @@ class ObjectMapperUnitTest {
     }
 
     @Test
-    void formatAsJsonObject_null() {
-        assertNull(ObjectMapper.formatAsJsonObject(null));
-    }
-
-    @Test
-    void formatAsJsonObject_ok() {
-        A a = new A("json", 5);
-        String json = ObjectMapper.formatAsJsonObject(a);
-        assertNotNull(json);
-        assertTrue(json.contains("\"name\""));
-        assertTrue(json.contains("\"value\""));
-    }
-
-    @Test
     void applyMappingFunction_throwsWrappedMapperException() {
         List<String> input = List.of("x", "y");
         assertThrows(MapperException.class, () -> ObjectMapper.transformCollection(input, (ThrowingFunction<String, B>) s -> {

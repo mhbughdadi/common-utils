@@ -1,8 +1,6 @@
 package com.apogee.common.mapper;
 
 import com.apogee.common.exceptions.MapperException;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.apogee.common.mapper.interfaces.ThrowingBiFunction;
 import com.apogee.common.mapper.interfaces.ThrowingFunction;
 import lombok.extern.log4j.Log4j2;
@@ -156,68 +154,4 @@ public final class Utilities {
         }
         return null;
     }
-
-    public static String formatAsJsonObject(Object object) {
-
-        ObjectMapper mapper = new ObjectMapper();
-        try {
-            return mapper.writeValueAsString(object);
-        } catch (JsonProcessingException e) {
-            //TODO: handle this exception properly, maybe return an error message instead of throwing a runtime exception
-            throw new RuntimeException(e);
-        }
-    }
-//
-//    public static Map<String, Object> getPathVariables(HttpServletRequest request) {
-//
-//        Map<String, Object> pathVariables = new HashMap<>();
-//
-//        if (request == null) {
-//            return pathVariables;
-//        }
-//
-//        Object attribute = request.getAttribute(HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE);
-//
-//        if (attribute instanceof Map<?, ?> variables) {
-//            variables.forEach((key, value) ->
-//                    pathVariables.put(String.valueOf(key), value)
-//            );
-//        }
-//
-//        return pathVariables;
-//    }
-//
-//    public static Map<String, Object> getQueryParams(HttpServletRequest request) {
-//
-//        Map<String, Object> queryParams = new HashMap<>();
-//
-//        if (request == null || request.getParameterMap() == null) {
-//            return queryParams;
-//        }
-//
-//        request.getParameterMap().forEach((key, values) -> {
-//            if (values == null) {
-//                queryParams.put(key, null);
-//            } else if (values.length == 1) {
-//                queryParams.put(key, values[0]);
-//            } else {
-//                queryParams.put(key, values); // multi-value support
-//            }
-//        });
-//
-//        return queryParams;
-//    }
-//
-//    public static Map<String, String> getHeaders(HttpServletRequest request) {
-//
-//        Map<String, String> headers = new HashMap<>();
-//        Enumeration<String> headerNames = request.getHeaderNames();
-//
-//        while (headerNames.hasMoreElements()) {
-//            String headerName = headerNames.nextElement();
-//            headers.put(headerName, request.getHeader(headerName));
-//        }
-//
-//        return headers;
-//    }
 }

@@ -77,11 +77,6 @@ public class ObjectMappingEngine {
 
         Object sourceValue = sourcePd.getReadMethod().invoke(source);
 
-        if (log.isTraceEnabled()) {
-            Class<?> sourceType = sourcePd.getPropertyType();
-            log.trace("Processing property '{}' of type {}", propName, sourceType.getName());
-        }
-
         PropertyDescriptor destinationPropertyDescriptor = destinationPropertyDescriptors.get(propName);
         if (destinationPropertyDescriptor == null || destinationPropertyDescriptor.getWriteMethod() == null) {
             return;
@@ -136,25 +131,16 @@ public class ObjectMappingEngine {
     private <D> void handleNestedObjectValue(D destinationObj, Object sourceValue, PropertyDescriptor destinationPropertyDescriptor, Field destField) throws Exception {
         Class<?> nestedDestClass = destField.getType();
         Object mapped = this.map(sourceValue, nestedDestClass);
-        if (log.isDebugEnabled()) {
-            log.debug("Mapped nested object for field '{}' to {}", destField.getName(), nestedDestClass.getName());
-        }
         destinationPropertyDescriptor.getWriteMethod().invoke(destinationObj, mapped);
     }
 
     private <D> void handleMapValue(D destinationObj, Object sourceValue, PropertyDescriptor destinationPropertyDescriptor, Field destField) throws Exception {
         Object mappedMap = mapMap(sourceValue, destField);
-        if (log.isDebugEnabled()) {
-            log.debug("Mapped map for field '{}'", destField.getName());
-        }
         destinationPropertyDescriptor.getWriteMethod().invoke(destinationObj, mappedMap);
     }
 
     private <D> void handleCollectionValue(D destinationObj, Object sourceValue, PropertyDescriptor destinationPropertyDescriptor, Field destField) throws Exception {
         Object mappedCollection = mapCollection(sourceValue, destField);
-        if (log.isDebugEnabled()) {
-            log.debug("Mapped collection for field '{}'", destField.getName());
-        }
         destinationPropertyDescriptor.getWriteMethod().invoke(destinationObj, mappedCollection);
     }
 
