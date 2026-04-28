@@ -5,15 +5,17 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.apogee.common.mapper.interfaces.ThrowingBiFunction;
 import com.apogee.common.mapper.interfaces.ThrowingFunction;
+import lombok.extern.log4j.Log4j2;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 @Deprecated
+@Log4j2
 public final class Utilities {
 
-    private static final ObjectMappingEngine MAPPER = new ObjectMappingEngine();
+    private static final ObjectMappingEngine MAPPER =  ObjectMappingEngine.getInstance();
 
     private Utilities() {
     }

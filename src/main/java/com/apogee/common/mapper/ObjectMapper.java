@@ -5,8 +5,7 @@ import com.apogee.common.mapper.interfaces.ThrowingBiFunction;
 import com.apogee.common.mapper.interfaces.ThrowingFunction;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.log4j.Log4j2;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -17,9 +16,9 @@ import java.util.Optional;
  * Utility class for object mapping operations, including collections and single objects.
  * Provides methods for transforming data with optional customization callbacks.
  */
+@Log4j2
 public final class ObjectMapper {
 
-    private static final Logger logger = LoggerFactory.getLogger(ObjectMapper.class);
     private static final com.fasterxml.jackson.databind.ObjectMapper JSON_MAPPER = new com.fasterxml.jackson.databind.ObjectMapper();  // Cached for performance
 
     private ObjectMapper() {
@@ -155,7 +154,7 @@ public final class ObjectMapper {
         try {
             return JSON_MAPPER.writeValueAsString(object);
         } catch (JsonProcessingException e) {
-            logger.error("Failed to serialize object to JSON", e);
+            log.error("Failed to serialize object to JSON", e);
             throw new MapperException("Failed to serialize object to JSON", e);
         }
     }
@@ -166,7 +165,7 @@ public final class ObjectMapper {
         try {
             return mappingFunction.apply(element);
         } catch (Exception e) {
-            logger.error("Error applying mapping function for element: {}", element, e);
+            log.error("Error applying mapping function for element: {}", element, e);
             throw new MapperException("Mapping function failed: " + e.getMessage(), e);
         }
     }
@@ -180,7 +179,7 @@ public final class ObjectMapper {
         try {
             return complementaryFunction.apply(source, mapped);
         } catch (Exception e) {
-            logger.error("Error applying complementary function for source: {} and mapped: {}", source, mapped, e);
+            log.error("Error applying complementary function for source: {} and mapped: {}", source, mapped, e);
             throw new MapperException("Complementary function failed: " + e.getMessage(), e);
         }
     }
@@ -189,13 +188,13 @@ public final class ObjectMapper {
         try {
             return getDefaultMapper().map(source, destinationClass);
         } catch (Exception e) {
-            logger.error("Error mapping object: {} to class: {}", source, destinationClass, e);
+            log.error("Error mapping object: {} to class: {}", source, destinationClass, e);
             throw new MapperException("Object mapping failed: " + e.getMessage(), e);
         }
     }
 
     private static ObjectMappingEngine getDefaultMapper() {
-        // In a real scenario, this could be injected or configurable
-        return new ObjectMappingEngine();
+
+        return  ObjectMappingEngine.getInstance();
     }
 }

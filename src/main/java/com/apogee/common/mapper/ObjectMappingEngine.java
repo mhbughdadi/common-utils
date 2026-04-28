@@ -2,9 +2,6 @@ package com.apogee.common.mapper;
 
 import com.apogee.common.exceptions.MapperException;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
@@ -31,8 +28,6 @@ import java.util.stream.Collectors;
 
 public class ObjectMappingEngine {
 
-    private static final Logger logger = LoggerFactory.getLogger(ObjectMappingEngine.class);
-
     private static final Set<Class<?>> SIMPLE_TYPES = Set.of(
             String.class, UUID.class, BigDecimal.class, BigInteger.class
     );
@@ -43,6 +38,9 @@ public class ObjectMappingEngine {
     // For performance, add field cache
     private static final Map<Class<?>, Map<String, Field>> FIELD_CACHE = new ConcurrentHashMap<>();
 
+    private ObjectMappingEngine () {
+        //intentionally left blank to prevent instantiation
+    }
     public <S, D> D map(S source, Class<D> destinationClass) throws Exception {
 
         if (source == null) {
@@ -328,6 +326,15 @@ public class ObjectMappingEngine {
                 || Boolean.class.isAssignableFrom(sourceClass)
                 || Date.class.isAssignableFrom(sourceClass)
                 || java.time.temporal.Temporal.class.isAssignableFrom(sourceClass);
+    }
+
+    private static class Holder {
+        private static final ObjectMappingEngine INSTANCE =
+                new ObjectMappingEngine();
+    }
+
+    public static ObjectMappingEngine getInstance() {
+        return Holder.INSTANCE;
     }
 
 }
